@@ -1,0 +1,39 @@
+# Full stack: MySQL + E-Clinic (Tomcat)
+# Usage: mvn clean package && docker compose up --build
+# App:   http://localhost:8080/login
+# Admin: admin / admin123 (seeded on first run)
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: elcinic-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: elcinic
+    ports:
+      - "3307:3306"
+    volumes:
+      - elcinic_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  app:
+    build: .
+    container_name: elcinic-app
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/elcinic?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USER: root
+      DB_PASSWORD: root
+      MYSQL_BOOTSTRAP_URL: jdbc:mysql://mysql:3306/?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  elcinic_mysql_data:

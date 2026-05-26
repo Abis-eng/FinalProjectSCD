@@ -1,0 +1,12 @@
+.git
+.github
+.idea
+.smarttomcat
+target/classes
+target/test-classes
+target/surefire-reports
+*.iml
+*.md
+!README.md
+agent-transcripts
+terminals
