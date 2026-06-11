@@ -75,12 +75,22 @@ public class JdbcInvoiceRepository implements InvoiceRepository {
 
     @Override
     public void updatePayment(int id, PaymentStatus status, String paymentMethod) {
-        String sql = "UPDATE invoices SET status=?, payment_method=?, paid_at=NOW() WHERE id=?";
+        updatePayment(id, status, paymentMethod, null, null);
+    }
+
+    @Override
+    public void updatePayment(int id, PaymentStatus status, String paymentMethod,
+                              String paymentReference, String cardLast4) {
+        String sql = """
+                UPDATE invoices SET status=?, payment_method=?, payment_reference=?, card_last4=?, paid_at=NOW()
+                WHERE id=?""";
         try (Connection c = DatabaseConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, status.name());
             ps.setString(2, paymentMethod);
-            ps.setInt(3, id);
+            ps.setString(3, paymentReference);
+            ps.setString(4, cardLast4);
+            ps.setInt(5, id);
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -132,6 +142,8 @@ public class JdbcInvoiceRepository implements InvoiceRepository {
         i.setAmount(rs.getBigDecimal("amount"));
         i.setStatus(PaymentStatus.fromString(rs.getString("status")));
         i.setPaymentMethod(rs.getString("payment_method"));
+        i.setPaymentReference(rs.getString("payment_reference"));
+        i.setCardLast4(rs.getString("card_last4"));
         Timestamp paid = rs.getTimestamp("paid_at");
         if (paid != null) {
             i.setPaidAt(paid.toLocalDateTime());

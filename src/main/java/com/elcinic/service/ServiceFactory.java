@@ -19,7 +19,8 @@ public final class ServiceFactory {
     private static final DashboardRepository DASHBOARD_REPO = new DashboardRepository();
 
     private static final NotificationService NOTIFICATION_SERVICE = new NotificationService(NOTIFICATION_REPO);
-    private static final BillingService BILLING_SERVICE = new BillingService(INVOICE_REPO);
+    private static final BillingService BILLING_SERVICE =
+            new BillingService(INVOICE_REPO, APPOINTMENT_REPO, NOTIFICATION_SERVICE);
     private static final AuthService AUTH_SERVICE = new AuthService(USER_REPO);
     private static final RegistrationService REGISTRATION_SERVICE =
             new RegistrationService(USER_REPO, DOCTOR_REPO, NURSE_REPO, NOTIFICATION_SERVICE);

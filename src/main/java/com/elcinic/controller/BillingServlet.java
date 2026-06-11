@@ -37,9 +37,7 @@ public class BillingServlet extends BaseServlet {
         String action = request.getParameter("action");
         try {
             int id = ValidationUtil.parsePositiveId(request.getParameter("id"), "Invoice");
-            if ("pay".equals(action) && user.getRole() == Role.PATIENT) {
-                ServiceFactory.billingService().pay(id, user.getId(), request.getParameter("paymentMethod"));
-            } else if ("markPaid".equals(action) && user.getRole() == Role.ADMIN) {
+            if ("markPaid".equals(action) && user.getRole() == Role.ADMIN) {
                 ServiceFactory.billingService().markPaidByAdmin(id, request.getParameter("paymentMethod"));
             } else if ("waive".equals(action) && user.getRole() == Role.ADMIN) {
                 ServiceFactory.billingService().waive(id);

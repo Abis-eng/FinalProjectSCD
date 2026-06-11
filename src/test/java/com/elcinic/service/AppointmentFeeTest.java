@@ -200,6 +200,11 @@ class AppointmentFeeTest {
             }
 
             @Override
+            public void updatePayment(int id, PaymentStatus status, String paymentMethod,
+                                        String paymentReference, String cardLast4) {
+            }
+
+            @Override
             public double sumPaidToday() {
                 return 0;
             }

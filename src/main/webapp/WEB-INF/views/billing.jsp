@@ -27,19 +27,24 @@
                     <td><span class="badge badge-${inv.status.name().toLowerCase()}">${inv.status}</span></td>
                     <td>
                         <c:if test="${inv.status.name() == 'PENDING' && sessionScope.currentUser.role.name() == 'PATIENT'}">
-                            <form class="inline-form" method="post" action="${pageContext.request.contextPath}/billing">
-                                <input type="hidden" name="action" value="pay">
-                                <input type="hidden" name="id" value="${inv.id}">
-                                <select name="paymentMethod"><option>CARD</option><option>CASH</option><option>ONLINE</option></select>
-                                <button class="btn btn-sm" type="submit">Pay Now</button>
-                            </form>
+                            <a class="btn btn-sm" href="${pageContext.request.contextPath}/payment?invoiceId=${inv.id}">Pay securely</a>
+                            <span class="muted" style="font-size:.8rem;display:block;margin-top:.25rem">Card · JazzCash · Bank transfer</span>
                         </c:if>
                         <c:if test="${sessionScope.currentUser.role.name() == 'ADMIN' && inv.status.name() == 'PENDING'}">
                             <form class="inline-form" method="post" action="${pageContext.request.contextPath}/billing">
                                 <input type="hidden" name="id" value="${inv.id}">
+                                <select name="paymentMethod">
+                                    <option value="CASH">Cash at desk</option>
+                                    <option value="CARD">Card at desk</option>
+                                    <option value="ONLINE">Online (manual)</option>
+                                    <option value="BANK_TRANSFER">Bank transfer</option>
+                                </select>
                                 <button name="action" value="markPaid" class="btn btn-sm">Mark Paid</button>
                                 <button name="action" value="waive" class="btn btn-sm btn-secondary">Waive</button>
                             </form>
+                        </c:if>
+                        <c:if test="${inv.status.name() == 'PAID' && not empty inv.paymentReference}">
+                            <span class="muted" style="font-size:.75rem">${inv.paymentReference}</span>
                         </c:if>
                     </td>
                 </tr>

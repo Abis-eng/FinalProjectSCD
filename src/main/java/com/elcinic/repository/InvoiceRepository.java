@@ -19,5 +19,8 @@ public interface InvoiceRepository {
 
     void updatePayment(int id, PaymentStatus status, String paymentMethod);
 
+    void updatePayment(int id, PaymentStatus status, String paymentMethod,
+                       String paymentReference, String cardLast4);
+
     double sumPaidToday();
 }

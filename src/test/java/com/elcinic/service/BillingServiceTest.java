@@ -59,6 +59,17 @@ class BillingServiceTest {
             }
 
             @Override
+            public void updatePayment(int id, PaymentStatus status, String paymentMethod,
+                                        String paymentReference, String cardLast4) {
+                updatePayment(id, status, paymentMethod);
+                Invoice inv = invoices.get(id);
+                if (inv != null) {
+                    inv.setPaymentReference(paymentReference);
+                    inv.setCardLast4(cardLast4);
+                }
+            }
+
+            @Override
             public double sumPaidToday() {
                 return 0;
             }
@@ -122,6 +133,27 @@ class BillingServiceTest {
         int invId = billingService.listForPatient(10).get(0).getId();
         billingService.waive(invId);
         assertEquals(PaymentStatus.WAIVED, invoices.get(invId).getStatus());
+    }
+
+    @Test
+    void pay_rejectsCashForPatientSelfPay() {
+        Appointment a = appointment(7, 10, BigDecimal.valueOf(2000));
+        billingService.createForAppointment(a);
+        int invId = billingService.listForPatient(10).get(0).getId();
+        assertThrows(ServiceException.class, () -> billingService.pay(invId, 10, "CASH"));
+    }
+
+    @Test
+    void completeOnlineCheckout_generatesReference() {
+        Appointment a = appointment(8, 10, BigDecimal.valueOf(3500));
+        billingService.createForAppointment(a);
+        int invId = billingService.listForPatient(10).get(0).getId();
+        PaymentCheckoutState checkout = new PaymentCheckoutState();
+        checkout.setMethod("CARD");
+        checkout.setCardLast4("1111");
+        String ref = billingService.completeOnlineCheckout(invId, 10, checkout);
+        assertTrue(ref.startsWith("ELC-CARD-"));
+        assertEquals(PaymentStatus.PAID, invoices.get(invId).getStatus());
     }
 
     private static Appointment appointment(int id, int patientId, BigDecimal fee) {

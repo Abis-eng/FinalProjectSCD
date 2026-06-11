@@ -36,6 +36,12 @@ public final class SchemaMigration {
             if (!columnExists(conn, "patients", "requested_doctor_id")) {
                 st.executeUpdate("ALTER TABLE patients ADD COLUMN requested_doctor_id INT NULL");
             }
+            if (!columnExists(conn, "invoices", "payment_reference")) {
+                st.executeUpdate("ALTER TABLE invoices ADD COLUMN payment_reference VARCHAR(80)");
+            }
+            if (!columnExists(conn, "invoices", "card_last4")) {
+                st.executeUpdate("ALTER TABLE invoices ADD COLUMN card_last4 VARCHAR(4)");
+            }
             if (!tableExists(conn, "chat_messages")) {
                 st.executeUpdate("""
                         CREATE TABLE chat_messages (

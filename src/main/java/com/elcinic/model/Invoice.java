@@ -11,6 +11,8 @@ public class Invoice {
     private BigDecimal amount;
     private PaymentStatus status;
     private String paymentMethod;
+    private String paymentReference;
+    private String cardLast4;
     private LocalDateTime paidAt;
     private LocalDateTime createdAt;
     private String appointmentDate;
@@ -30,6 +32,10 @@ public class Invoice {
     public void setStatus(PaymentStatus status) { this.status = status; }
     public String getPaymentMethod() { return paymentMethod; }
     public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+    public String getPaymentReference() { return paymentReference; }
+    public void setPaymentReference(String paymentReference) { this.paymentReference = paymentReference; }
+    public String getCardLast4() { return cardLast4; }
+    public void setCardLast4(String cardLast4) { this.cardLast4 = cardLast4; }
     public LocalDateTime getPaidAt() { return paidAt; }
     public void setPaidAt(LocalDateTime paidAt) { this.paidAt = paidAt; }
     public LocalDateTime getCreatedAt() { return createdAt; }

@@ -88,9 +88,15 @@ public class AdminServlet extends BaseServlet {
                     setFlash(request, "success", "User deactivated");
                 }
             } else if ("/admin/patients".equals(path) && "assign".equals(request.getParameter("action"))) {
-                ServiceFactory.patientService().assignDoctor(
-                        ValidationUtil.parsePositiveId(request.getParameter("patientId"), "Patient"),
-                        ValidationUtil.parsePositiveId(request.getParameter("doctorId"), "Doctor"));
+                int patientId = ValidationUtil.parsePositiveId(request.getParameter("patientId"), "Patient");
+                int doctorId = ValidationUtil.parsePositiveId(request.getParameter("doctorId"), "Doctor");
+                ServiceFactory.patientService().assignDoctor(patientId, doctorId);
+                String doctorName = ServiceFactory.userService().getUser(doctorId).getFullName();
+                ServiceFactory.notificationService().notify(
+                        patientId,
+                        "Doctor assigned",
+                        "Dr. " + doctorName + " has been assigned as your primary doctor."
+                );
                 setFlash(request, "success", "Doctor assigned to patient");
             }
         } catch (Exception e) {

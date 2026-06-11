@@ -66,7 +66,12 @@ class EndToEndAccountFlowTest {
         BillingService billing = billingService(invoices);
         billing.createForAppointment(appts.getById(apptId));
         assertEquals(1, billing.listForPatient(patient.getId()).size());
-        billing.pay(billing.listForPatient(patient.getId()).get(0).getId(), patient.getId(), "CASH");
+        int invoiceId = billing.listForPatient(patient.getId()).get(0).getId();
+        PaymentCheckoutState checkout = new PaymentCheckoutState();
+        checkout.setMethod("ONLINE");
+        checkout.setMobileNumber("03001234567");
+        String ref = billing.completeOnlineCheckout(invoiceId, patient.getId(), checkout);
+        assertTrue(ref.startsWith("ELC-WALLET-"));
         assertEquals(PaymentStatus.PAID, billing.listForPatient(patient.getId()).get(0).getStatus());
 
         assertTrue(notifications.size() >= 2);
@@ -185,6 +190,12 @@ class EndToEndAccountFlowTest {
                             i.setStatus(status);
                             i.setPaymentMethod(paymentMethod);
                         });
+            }
+
+            @Override
+            public void updatePayment(int id, PaymentStatus status, String paymentMethod,
+                                        String paymentReference, String cardLast4) {
+                updatePayment(id, status, paymentMethod);
             }
 
             @Override
