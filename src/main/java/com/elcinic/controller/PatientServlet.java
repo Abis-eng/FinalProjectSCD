@@ -1,6 +1,7 @@
 package com.elcinic.controller;
 
 import com.elcinic.service.ServiceFactory;
+import com.elcinic.utility.ValidationUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,5 +43,33 @@ public class PatientServlet extends BaseServlet {
             }
             default -> response.sendError(404);
         }
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        int patientId = currentUser(request).getId();
+        String path = request.getServletPath();
+        if (!"/patient/profile".equals(path)) {
+            response.sendError(405);
+            return;
+        }
+        try {
+            if ("requestDoctor".equals(request.getParameter("action"))) {
+                int doctorId = ValidationUtil.parsePositiveId(request.getParameter("doctorId"), "Doctor");
+                ServiceFactory.patientService().requestDoctor(patientId, doctorId);
+                String patientName = currentUser(request).getFullName();
+                String doctorName = ServiceFactory.userService().getUser(doctorId).getFullName();
+                ServiceFactory.userService().searchUsers(null, com.elcinic.model.Role.ADMIN)
+                        .forEach(admin -> ServiceFactory.notificationService().notify(
+                                admin.getId(),
+                                "Doctor request from patient",
+                                patientName + " requested Dr. " + doctorName + ". Please review in Admin > Patients."
+                        ));
+                setFlash(request, "success", "Doctor request sent to admin for approval.");
+            }
+        } catch (Exception e) {
+            setFlash(request, "error", handleError(request, e));
+        }
+        response.sendRedirect(redirectWithContext(request, "/patient/profile"));
     }
 }

@@ -33,11 +33,35 @@ public final class SchemaMigration {
                 st.executeUpdate("ALTER TABLE doctors ADD COLUMN consultation_fee DECIMAL(10,2) DEFAULT 3000.00");
             }
             st.executeUpdate("UPDATE doctors SET consultation_fee = 3000.00 WHERE consultation_fee IS NULL");
+            if (!columnExists(conn, "patients", "requested_doctor_id")) {
+                st.executeUpdate("ALTER TABLE patients ADD COLUMN requested_doctor_id INT NULL");
+            }
+            if (!tableExists(conn, "chat_messages")) {
+                st.executeUpdate("""
+                        CREATE TABLE chat_messages (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            sender_id INT NOT NULL,
+                            receiver_id INT NOT NULL,
+                            appointment_id INT NULL,
+                            content TEXT NOT NULL,
+                            is_read TINYINT(1) DEFAULT 0,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+                            FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+                            FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE CASCADE
+                        )""");
+            }
         }
     }
 
     private static boolean columnExists(Connection conn, String table, String column) throws SQLException {
         try (ResultSet rs = conn.getMetaData().getColumns(null, null, table, column)) {
+            return rs.next();
+        }
+    }
+
+    private static boolean tableExists(Connection conn, String table) throws SQLException {
+        try (ResultSet rs = conn.getMetaData().getTables(null, null, table, null)) {
             return rs.next();
         }
     }

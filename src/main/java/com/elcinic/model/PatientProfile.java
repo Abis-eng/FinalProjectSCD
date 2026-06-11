@@ -11,6 +11,8 @@ public class PatientProfile {
     private String bloodType;
     private Integer assignedDoctorId;
     private String assignedDoctorName;
+    private Integer requestedDoctorId;
+    private String requestedDoctorName;
 
     public int getUserId() {
         return userId;
@@ -74,5 +76,21 @@ public class PatientProfile {
 
     public void setAssignedDoctorName(String assignedDoctorName) {
         this.assignedDoctorName = assignedDoctorName;
+    }
+
+    public Integer getRequestedDoctorId() {
+        return requestedDoctorId;
+    }
+
+    public void setRequestedDoctorId(Integer requestedDoctorId) {
+        this.requestedDoctorId = requestedDoctorId;
+    }
+
+    public String getRequestedDoctorName() {
+        return requestedDoctorName;
+    }
+
+    public void setRequestedDoctorName(String requestedDoctorName) {
+        this.requestedDoctorName = requestedDoctorName;
     }
 }

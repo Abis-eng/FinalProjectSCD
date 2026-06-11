@@ -12,6 +12,7 @@ public final class ServiceFactory {
     private static final MedicalRecordRepository RECORD_REPO = new JdbcMedicalRecordRepository();
     private static final InvoiceRepository INVOICE_REPO = new JdbcInvoiceRepository();
     private static final NotificationRepository NOTIFICATION_REPO = new JdbcNotificationRepository();
+    private static final ChatRepository CHAT_REPO = new JdbcChatRepository();
     private static final LabTestRepository LAB_REPO = new JdbcLabTestRepository();
     private static final VitalSignsRepository VITAL_REPO = new JdbcVitalSignsRepository();
     private static final PrescriptionRepository PRESCRIPTION_REPO = new JdbcPrescriptionRepository();
@@ -33,6 +34,7 @@ public final class ServiceFactory {
     private static final LabService LAB_SERVICE = new LabService(LAB_REPO, USER_REPO);
     private static final VitalService VITAL_SERVICE = new VitalService(VITAL_REPO);
     private static final DashboardService DASHBOARD_SERVICE = new DashboardService(DASHBOARD_REPO, NOTIFICATION_SERVICE);
+    private static final ChatService CHAT_SERVICE = new ChatService(CHAT_REPO, USER_REPO, APPOINTMENT_SERVICE);
 
     static {
         LAB_SERVICE.setNotificationService(NOTIFICATION_SERVICE);
@@ -53,4 +55,5 @@ public final class ServiceFactory {
     public static LabService labService() { return LAB_SERVICE; }
     public static VitalService vitalService() { return VITAL_SERVICE; }
     public static DashboardService dashboardService() { return DASHBOARD_SERVICE; }
+    public static ChatService chatService() { return CHAT_SERVICE; }
 }

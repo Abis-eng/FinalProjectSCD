@@ -17,4 +17,6 @@ public interface PatientRepository {
     void update(PatientProfile profile);
 
     void assignDoctor(int patientUserId, Integer doctorId);
+
+    void requestDoctor(int patientUserId, Integer doctorId);
 }

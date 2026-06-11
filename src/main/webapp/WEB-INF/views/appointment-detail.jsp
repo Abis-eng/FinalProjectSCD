@@ -50,6 +50,12 @@
                 <button class="btn" type="submit">Save Vitals</button>
             </form>
             <% } %>
+            <div style="margin-top:12px">
+                <a class="btn btn-secondary"
+                   href="${pageContext.request.contextPath}/chat?userId=${sessionScope.currentUser.id == appointment.patientId ? appointment.providerId : appointment.patientId}&appointmentId=${appointment.id}">
+                    Chat on this appointment
+                </a>
+            </div>
         </div>
     </div>
     <a class="btn btn-secondary" href="javascript:history.back()">Back</a>

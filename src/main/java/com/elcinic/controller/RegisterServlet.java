@@ -63,7 +63,9 @@ public class RegisterServlet extends BaseServlet {
                     }
                     ServiceFactory.patientService().completeRegistration(
                             user.getId(), dob, request.getParameter("bloodType"), doctorId);
-                    flashMessage = "Patient account created. You can log in now.";
+                    flashMessage = doctorId != null
+                            ? "Patient account created. Your doctor preference was sent to admin for assignment."
+                            : "Patient account created. You can log in now.";
                 }
                 case DOCTOR -> {
                     ServiceFactory.registrationService().registerDoctor(

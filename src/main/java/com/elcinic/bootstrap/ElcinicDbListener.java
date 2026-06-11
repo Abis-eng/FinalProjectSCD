@@ -107,8 +107,10 @@ public class ElcinicDbListener implements ServletContextListener {
                     date_of_birth DATE,
                     blood_type VARCHAR(5),
                     assigned_doctor_id INT NULL,
+                    requested_doctor_id INT NULL,
                     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-                    FOREIGN KEY (assigned_doctor_id) REFERENCES users(id) ON DELETE SET NULL
+                    FOREIGN KEY (assigned_doctor_id) REFERENCES users(id) ON DELETE SET NULL,
+                    FOREIGN KEY (requested_doctor_id) REFERENCES users(id) ON DELETE SET NULL
                 )""");
         st.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS appointments (
@@ -142,6 +144,19 @@ public class ElcinicDbListener implements ServletContextListener {
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (patient_id) REFERENCES users(id) ON DELETE CASCADE,
                     FOREIGN KEY (doctor_id) REFERENCES users(id) ON DELETE CASCADE
+                )""");
+        st.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS chat_messages (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    sender_id INT NOT NULL,
+                    receiver_id INT NOT NULL,
+                    appointment_id INT NULL,
+                    content TEXT NOT NULL,
+                    is_read TINYINT(1) DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE CASCADE
                 )""");
     }
 

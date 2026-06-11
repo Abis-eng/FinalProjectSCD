@@ -15,7 +15,7 @@
         <h2>All Patients</h2>
         <form class="toolbar" method="get"><input name="q" placeholder="Search by name"><button class="btn btn-secondary">Search</button></form>
         <table>
-            <tr><th>Name</th><th>Email</th><th>Phone</th><th>DOB</th><th>Blood</th><th>Doctor</th><th>Assign</th></tr>
+            <tr><th>Name</th><th>Email</th><th>Phone</th><th>DOB</th><th>Blood</th><th>Requested Doctor</th><th>Assigned Doctor</th><th>Assign</th></tr>
             <c:forEach var="p" items="${patients}">
                 <tr>
                     <td><strong>${p.fullName}</strong></td>
@@ -23,6 +23,7 @@
                     <td>${p.phone != null ? p.phone : '—'}</td>
                     <td>${p.dateOfBirth != null ? p.dateOfBirth : '—'}</td>
                     <td>${p.bloodType != null ? p.bloodType : '—'}</td>
+                    <td>${p.requestedDoctorName != null ? p.requestedDoctorName : '—'}</td>
                     <td>${p.assignedDoctorName != null ? p.assignedDoctorName : '—'}</td>
                     <td>
                         <form method="post" class="inline-form" action="${pageContext.request.contextPath}/admin/patients">

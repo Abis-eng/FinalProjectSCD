@@ -52,6 +52,10 @@ class UserServiceTest {
             @Override
             public void assignDoctor(int patientUserId, Integer doctorId) {
             }
+
+            @Override
+            public void requestDoctor(int patientUserId, Integer doctorId) {
+            }
         };
         NurseRepository nurses = new NurseRepository() {
             @Override

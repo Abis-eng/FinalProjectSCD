@@ -14,10 +14,12 @@ public class JdbcPatientRepository implements PatientRepository {
     @Override
     public Optional<PatientProfile> findByUserId(int userId) {
         String sql = """
-                SELECT p.*, u.full_name AS patient_name, u.email, u.phone, d.full_name AS doctor_name
+                SELECT p.*, u.full_name AS patient_name, u.email, u.phone,
+                       d.full_name AS doctor_name, rd.full_name AS requested_doctor_name
                 FROM patients p
                 JOIN users u ON p.user_id = u.id
                 LEFT JOIN users d ON p.assigned_doctor_id = d.id
+                LEFT JOIN users rd ON p.requested_doctor_id = rd.id
                 WHERE p.user_id = ?
                 """;
         try (Connection conn = DatabaseConnection.getConnection();
@@ -37,10 +39,12 @@ public class JdbcPatientRepository implements PatientRepository {
     @Override
     public List<PatientProfile> findAll(String keyword) {
         StringBuilder sql = new StringBuilder("""
-                SELECT p.*, u.full_name AS patient_name, u.email, u.phone, d.full_name AS doctor_name
+                SELECT p.*, u.full_name AS patient_name, u.email, u.phone,
+                       d.full_name AS doctor_name, rd.full_name AS requested_doctor_name
                 FROM patients p
                 JOIN users u ON p.user_id = u.id
                 LEFT JOIN users d ON p.assigned_doctor_id = d.id
+                LEFT JOIN users rd ON p.requested_doctor_id = rd.id
                 WHERE u.active = 1 AND u.account_status = 'ACTIVE'
                 """);
         if (keyword != null && !keyword.isBlank()) {
@@ -69,7 +73,7 @@ public class JdbcPatientRepository implements PatientRepository {
 
     @Override
     public void create(int userId, PatientProfile profile) {
-        String sql = "INSERT INTO patients (user_id, date_of_birth, blood_type, assigned_doctor_id) VALUES (?,?,?,?)";
+        String sql = "INSERT INTO patients (user_id, date_of_birth, blood_type, assigned_doctor_id, requested_doctor_id) VALUES (?,?,?,?,?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
@@ -80,6 +84,11 @@ public class JdbcPatientRepository implements PatientRepository {
             } else {
                 ps.setNull(4, Types.INTEGER);
             }
+            if (profile.getRequestedDoctorId() != null) {
+                ps.setInt(5, profile.getRequestedDoctorId());
+            } else {
+                ps.setNull(5, Types.INTEGER);
+            }
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to create patient profile", e);
@@ -88,7 +97,7 @@ public class JdbcPatientRepository implements PatientRepository {
 
     @Override
     public void update(PatientProfile profile) {
-        String sql = "UPDATE patients SET date_of_birth=?, blood_type=?, assigned_doctor_id=? WHERE user_id=?";
+        String sql = "UPDATE patients SET date_of_birth=?, blood_type=?, assigned_doctor_id=?, requested_doctor_id=? WHERE user_id=?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             setDate(ps, 1, profile.getDateOfBirth());
@@ -98,7 +107,12 @@ public class JdbcPatientRepository implements PatientRepository {
             } else {
                 ps.setNull(3, Types.INTEGER);
             }
-            ps.setInt(4, profile.getUserId());
+            if (profile.getRequestedDoctorId() != null) {
+                ps.setInt(4, profile.getRequestedDoctorId());
+            } else {
+                ps.setNull(4, Types.INTEGER);
+            }
+            ps.setInt(5, profile.getUserId());
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update patient", e);
@@ -108,10 +122,12 @@ public class JdbcPatientRepository implements PatientRepository {
     @Override
     public List<PatientProfile> findByAssignedDoctor(int doctorId, String keyword) {
         StringBuilder sql = new StringBuilder("""
-                SELECT p.*, u.full_name AS patient_name, u.email, u.phone, d.full_name AS doctor_name
+                SELECT p.*, u.full_name AS patient_name, u.email, u.phone,
+                       d.full_name AS doctor_name, rd.full_name AS requested_doctor_name
                 FROM patients p
                 JOIN users u ON p.user_id = u.id
                 LEFT JOIN users d ON p.assigned_doctor_id = d.id
+                LEFT JOIN users rd ON p.requested_doctor_id = rd.id
                 WHERE u.active = 1 AND u.account_status = 'ACTIVE' AND p.assigned_doctor_id = ?
                 """);
         if (keyword != null && !keyword.isBlank()) {
@@ -141,7 +157,7 @@ public class JdbcPatientRepository implements PatientRepository {
 
     @Override
     public void assignDoctor(int patientUserId, Integer doctorId) {
-        String sql = "UPDATE patients SET assigned_doctor_id = ? WHERE user_id = ?";
+        String sql = "UPDATE patients SET assigned_doctor_id = ?, requested_doctor_id = NULL WHERE user_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             if (doctorId != null) {
@@ -153,6 +169,23 @@ public class JdbcPatientRepository implements PatientRepository {
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to assign doctor", e);
+        }
+    }
+
+    @Override
+    public void requestDoctor(int patientUserId, Integer doctorId) {
+        String sql = "UPDATE patients SET requested_doctor_id = ? WHERE user_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (doctorId != null) {
+                ps.setInt(1, doctorId);
+            } else {
+                ps.setNull(1, Types.INTEGER);
+            }
+            ps.setInt(2, patientUserId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to save requested doctor", e);
         }
     }
 
@@ -168,11 +201,16 @@ public class JdbcPatientRepository implements PatientRepository {
         if (!rs.wasNull()) {
             p.setAssignedDoctorId(docId);
         }
+        int reqDocId = rs.getInt("requested_doctor_id");
+        if (!rs.wasNull()) {
+            p.setRequestedDoctorId(reqDocId);
+        }
         try {
             p.setFullName(rs.getString("patient_name"));
             p.setEmail(rs.getString("email"));
             p.setPhone(rs.getString("phone"));
             p.setAssignedDoctorName(rs.getString("doctor_name"));
+            p.setRequestedDoctorName(rs.getString("requested_doctor_name"));
         } catch (SQLException ignored) {
         }
         return p;

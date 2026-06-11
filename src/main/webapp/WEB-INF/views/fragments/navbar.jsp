@@ -40,6 +40,7 @@
                 <a href="<%= ctx %>/patient/billing">Billing</a>
                 <a href="<%= ctx %>/patient/profile">My Doctor</a>
             <% } %>
+            <a href="<%= ctx %>/chat">Chat</a>
             <a href="<%= ctx %>/notifications">Alerts<% if (unread > 0) { %> <span class="badge-count"><%= unread %></span><% } %></a>
             <a href="<%= ctx %>/profile">Settings</a>
             <span class="user-pill"><%= u.getFullName() %> · <%= u.getRole() %></span>

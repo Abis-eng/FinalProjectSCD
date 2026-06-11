@@ -42,13 +42,13 @@ public class PatientService {
     public void completeRegistration(int userId, LocalDate dob, String bloodType, Integer doctorId) {
         if (doctorId != null) {
             doctorRepository.findByUserId(doctorId)
-                    .orElseThrow(() -> new ServiceException("Assigned doctor not found"));
+                    .orElseThrow(() -> new ServiceException("Requested doctor not found"));
         }
         PatientProfile profile = new PatientProfile();
         profile.setUserId(userId);
         profile.setDateOfBirth(dob);
         profile.setBloodType(bloodType);
-        profile.setAssignedDoctorId(doctorId);
+        profile.setRequestedDoctorId(doctorId);
         patientRepository.create(userId, profile);
     }
 
@@ -56,6 +56,12 @@ public class PatientService {
         doctorRepository.findByUserId(doctorId)
                 .orElseThrow(() -> new ServiceException("Doctor not found"));
         patientRepository.assignDoctor(patientId, doctorId);
+    }
+
+    public void requestDoctor(int patientId, int doctorId) {
+        doctorRepository.findByUserId(doctorId)
+                .orElseThrow(() -> new ServiceException("Doctor not found"));
+        patientRepository.requestDoctor(patientId, doctorId);
     }
 
     public void updateProfile(int patientId, LocalDate dob, String bloodType) {
