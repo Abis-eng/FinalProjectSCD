@@ -15,12 +15,13 @@ class BillingServiceTest {
     private final Map<Integer, Invoice> invoices = new HashMap<>();
     private BillingService billingService;
     private int invoiceSeq = 1;
+    private com.elcinic.repository.InvoiceRepository invoiceRepository;
 
     @BeforeEach
     void setUp() {
         invoices.clear();
         invoiceSeq = 1;
-        billingService = new BillingService(new com.elcinic.repository.InvoiceRepository() {
+        invoiceRepository = new com.elcinic.repository.InvoiceRepository() {
             @Override
             public Optional<Invoice> findByAppointmentId(int appointmentId) {
                 return invoices.values().stream()
@@ -73,7 +74,8 @@ class BillingServiceTest {
             public double sumPaidToday() {
                 return 0;
             }
-        });
+        };
+        billingService = new BillingService(invoiceRepository);
     }
 
     @Test
@@ -154,6 +156,101 @@ class BillingServiceTest {
         String ref = billingService.completeOnlineCheckout(invId, 10, checkout);
         assertTrue(ref.startsWith("ELC-CARD-"));
         assertEquals(PaymentStatus.PAID, invoices.get(invId).getStatus());
+    }
+
+    @Test
+    void completeOnlineCheckout_notifiesProvider() {
+        List<Notification> notifications = new ArrayList<>();
+        Appointment appt = appointment(9, 10, BigDecimal.valueOf(3500));
+        BillingService service = billingServiceWithNotifications(notifications, appt);
+
+        service.createForAppointment(appt);
+        Invoice inv = service.listForPatient(10).get(0);
+        inv.setPatientName("Ali Raza");
+        inv.setAppointmentDate("2026-06-15");
+        invoices.put(inv.getId(), inv);
+
+        PaymentCheckoutState checkout = new PaymentCheckoutState();
+        checkout.setMethod("ONLINE");
+        checkout.setCardLast4(null);
+        service.completeOnlineCheckout(inv.getId(), 10, checkout);
+
+        assertTrue(notifications.stream().anyMatch(n -> n.getUserId() == 10));
+        assertTrue(notifications.stream().anyMatch(n ->
+                n.getUserId() == 20 && n.getTitle().equals("Patient payment received")));
+    }
+
+    private BillingService billingServiceWithNotifications(List<Notification> notifications, Appointment appt) {
+        NotificationService notificationService = new NotificationService(new com.elcinic.repository.NotificationRepository() {
+            @Override
+            public List<Notification> findByUser(int userId, boolean unreadOnly) {
+                return notifications.stream().filter(n -> n.getUserId() == userId).toList();
+            }
+
+            @Override
+            public int countUnread(int userId) {
+                return 0;
+            }
+
+            @Override
+            public int create(Notification n) {
+                n.setId(notifications.size() + 1);
+                notifications.add(n);
+                return n.getId();
+            }
+
+            @Override
+            public void markRead(int id, int userId) {
+            }
+
+            @Override
+            public void markAllRead(int userId) {
+            }
+        });
+        com.elcinic.repository.AppointmentRepository appointmentRepository = new com.elcinic.repository.AppointmentRepository() {
+            @Override
+            public Optional<Appointment> findById(int id) {
+                return id == appt.getId() ? Optional.of(appt) : Optional.empty();
+            }
+
+            @Override
+            public List<Appointment> findAll(String keyword, AppointmentStatus status, java.time.LocalDate from, java.time.LocalDate to) {
+                return List.of(appt);
+            }
+
+            @Override
+            public List<Appointment> findByPatient(int patientId) {
+                return List.of();
+            }
+
+            @Override
+            public List<Appointment> findByProvider(int providerId) {
+                return List.of();
+            }
+
+            @Override
+            public int create(Appointment appointment) {
+                return 0;
+            }
+
+            @Override
+            public void updateStatus(int id, AppointmentStatus status) {
+            }
+
+            @Override
+            public void update(Appointment appointment) {
+            }
+
+            @Override
+            public void delete(int id) {
+            }
+
+            @Override
+            public boolean hasConflict(int providerId, java.time.LocalDate date, String timeSlot, Integer excludeId) {
+                return false;
+            }
+        };
+        return new BillingService(invoiceRepository, appointmentRepository, notificationService);
     }
 
     private static Appointment appointment(int id, int patientId, BigDecimal fee) {

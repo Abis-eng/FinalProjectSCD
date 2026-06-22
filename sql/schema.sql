@@ -1,5 +1,4 @@
--- E-Clinic Database Schema (MySQL / XAMPP)
--- Run: mysql -u root < sql/schema.sql   OR import via phpMyAdmin
+
 
 CREATE DATABASE IF NOT EXISTS elcinic CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE elcinic;

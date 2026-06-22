@@ -78,26 +78,22 @@ public class BillingService {
         String reference = generatePaymentReference(invoiceId, method);
         String cardLast4 = "CARD".equals(method) ? checkout.getCardLast4() : null;
         invoiceRepository.updatePayment(invoiceId, PaymentStatus.PAID, method, reference, cardLast4);
-        if (notificationService != null) {
-            String amount = invoice.getAmount() != null ? invoice.getAmount().toPlainString() : "0";
-            notificationService.notify(
-                    invoice.getPatientId(),
-                    "Payment received",
-                    "Your payment of Rs. " + amount + " via " + method + " was successful. Reference: " + reference
-            );
-        }
+        notifyPaymentParties(invoice, method, reference);
         return reference;
     }
 
     public void pay(int invoiceId, int patientId, String method) {
-        requirePayableInvoice(invoiceId, patientId);
+        Invoice invoice = requirePayableInvoice(invoiceId, patientId);
         String normalized = normalizePatientMethod(method);
         invoiceRepository.updatePayment(invoiceId, PaymentStatus.PAID, normalized, null, null);
+        notifyPaymentParties(invoice, normalized, null);
     }
 
     public void markPaidByAdmin(int invoiceId, String method) {
-        invoiceRepository.findById(invoiceId).orElseThrow(() -> new ServiceException("Invoice not found"));
-        invoiceRepository.updatePayment(invoiceId, PaymentStatus.PAID, normalizeMethod(method), null, null);
+        Invoice invoice = invoiceRepository.findById(invoiceId).orElseThrow(() -> new ServiceException("Invoice not found"));
+        String normalized = normalizeMethod(method);
+        invoiceRepository.updatePayment(invoiceId, PaymentStatus.PAID, normalized, null, null);
+        notifyPaymentParties(invoice, normalized, null);
     }
 
     public void waive(int invoiceId) {
@@ -127,6 +123,37 @@ public class BillingService {
         if (appointment.getStatus() == AppointmentStatus.CANCELLED) {
             throw new ServiceException("Cannot pay for a cancelled appointment");
         }
+    }
+
+    private void notifyPaymentParties(Invoice invoice, String method, String reference) {
+        if (notificationService == null) {
+            return;
+        }
+        String amount = invoice.getAmount() != null ? invoice.getAmount().toPlainString() : "0";
+        String patientLabel = invoice.getPatientName() != null && !invoice.getPatientName().isBlank()
+                ? invoice.getPatientName() : "Patient";
+        String dateLabel = invoice.getAppointmentDate() != null ? invoice.getAppointmentDate() : "scheduled visit";
+        String refLabel = reference != null && !reference.isBlank() ? reference : "N/A";
+
+        notificationService.notify(
+                invoice.getPatientId(),
+                "Payment received",
+                "Your payment of Rs. " + amount + " via " + method + " was successful. Reference: " + refLabel
+        );
+
+        if (appointmentRepository == null) {
+            return;
+        }
+        appointmentRepository.findById(invoice.getAppointmentId()).ifPresent(appt ->
+                notificationService.notify(
+                        appt.getProviderId(),
+                        "Patient payment received",
+                        patientLabel + " paid Rs. " + amount + " via " + method
+                                + " for the appointment on " + dateLabel
+                                + ". Reference: " + refLabel
+                                + ". Payment is complete — you may proceed with the visit."
+                )
+        );
     }
 
     private String generatePaymentReference(int invoiceId, String method) {
