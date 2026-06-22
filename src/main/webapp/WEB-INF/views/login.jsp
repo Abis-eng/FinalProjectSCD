@@ -38,9 +38,6 @@
     <p style="text-align:center;margin-top:1rem">
         <a href="${pageContext.request.contextPath}/register">Create an account</a> (patient, doctor, or nurse)
     </p>
-    <p style="font-size:.8rem;color:#6b7280;margin-top:1rem">
-        First-time setup: default admin is <strong>admin</strong> / <strong>admin123</strong> (created on first deploy only).
-    </p>
 </div>
 </body>
 </html>
